@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSL Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+        }
+        .show {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="container mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">SSL Dashboard</h1>
+            <div class="flex gap-4">
+                <button class="text-gray-600"><i class="bi bi-arrow-clockwise text-xl"></i></button>
+                <button class="text-gray-600"><i class="bi bi-box-arrow-up-right text-xl"></i></button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- SSL Certificate Section -->
+            <div class="bg-white rounded-lg p-6 shadow">
+                <h2 class="text-xl font-semibold mb-4">SSL Certificate</h2>
+                <div class="grid gap-4">
+                    <!-- First Card -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="grid gap-2">
+                            <div class="relative">
+                                <div class="bg-red-100 p-2 rounded cursor-pointer" onclick="toggleDropdown('expired')">
+                                    Expired: <span class="font-bold">4</span>
+                                </div>
+                                <div id="expired-dropdown" class="dropdown-content">
+                                    <div class="p-2">Certificate 01</div>
+                                    <div class="p-2">Certificate 02</div>
+                                    <div class="p-2">Certificate 03</div>
+                                    <div class="p-2">Certificate 04</div>
+                                </div>
+                            </div>
+                            <!-- Similar dropdowns for other categories -->
+                            <div class="bg-orange-100 p-2 rounded">
+                                Expiring within one week: <span class="font-bold">0</span>
+                            </div>
+                            <div class="bg-yellow-100 p-2 rounded">
+                                Expiring within one week and 30 days: <span class="font-bold">0</span>
+                            </div>
+                            <div class="bg-red-200 p-2 rounded">
+                                Expiring within 30 and 90 days: <span class="font-bold">1</span>
+                            </div>
+                            <div class="bg-green-100 p-2 rounded">
+                                Expiring after 90 days: <span class="font-bold">37</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Second Card -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold mb-2">Self Signed vs CA Signed</h3>
+                        <div class="relative h-64">
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                        <div class="flex justify-center gap-4 mt-2">
+                            <div>Self Signed: 29</div>
+                            <div>CA Signed: 13</div>
+                        </div>
+                    </div>
+
+                    <!-- Third Card -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold">Signature Algorithms (42)</h3>
+                        <div class="h-48">
+                            <canvas id="barChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SSL Virtual Servers Section -->
+            <div class="bg-white rounded-lg p-6 shadow">
+                <h2 class="text-xl font-semibold mb-4">SSL Virtual Servers</h2>
+                <div class="grid gap-4">
+                    <!-- Ephemeral RSA Card -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold text-center mb-2">Ephemeral RSA</h3>
+                        <div class="text-center text-2xl font-bold mb-4">20 Total</div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-green-100 p-2 rounded text-center">
+                                Enabled: 20
+                            </div>
+                            <div class="bg-red-100 p-2 rounded text-center">
+                                Disabled: 0
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DH Param Card -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold text-center mb-2">DH Param</h3>
+                        <div class="text-center text-2xl font-bold mb-4">20 Total</div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-green-100 p-2 rounded text-center">
+                                Enabled: 0
+                            </div>
+                            <div class="bg-red-100 p-2 rounded text-center">
+                                Disabled: 20
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Pie Chart
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Self Signed', 'CA Signed'],
+                datasets: [{
+                    data: [29, 13],
+                    backgroundColor: ['#4B5563', '#60A5FA']
+                }]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Bar Chart
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: ['MD5-RSA', 'SHA256-RSA', 'Not Recommended'],
+                datasets: [{
+                    data: [1, 38, 3],
+                    backgroundColor: ['#60A5FA', '#34D399', '#F87171']
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        function toggleDropdown(id) {
+            document.getElementById(id + '-dropdown').classList.toggle('show');
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.dropdown-trigger')) {
+                const dropdowns = document.getElementsByClassName('dropdown-content');
+                for (let dropdown of dropdowns) {
+                    if (dropdown.classList.contains('show')) {
+                        dropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
